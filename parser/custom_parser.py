@@ -39,7 +39,7 @@ class Parser:
         
      
     def advance(self):
-        ''' Function to consume current token and return it. '''
+        ''' Function to consume current token, otherwise return previous. '''
         if not self.at_end():
             self.current += 1
         else:
@@ -107,7 +107,7 @@ class Parser:
     
     
     def term(self):
-        ''' Function for additiona and subtraction. '''
+        ''' Function for addition and subtraction. '''
         expression = self.factor()
         while self.match([TokenType.MINUS, TokenType.PLUS]):
             operator = self.previous()

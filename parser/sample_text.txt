@@ -1,13 +1,2 @@
-{This is
-a comment
-(( ))[]
-!*+-/=<> <= == operators==
-  FOR >= -=
-23 > 66.2 This is interesting
-
-"This is a string'
-IF 20 > 10 THEN
-variable}
-
-2 + (2*-5)
-3 >= 3
+{2 + (2*-5)}
+3 >= 3-2

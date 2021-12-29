@@ -42,7 +42,7 @@ class Manipula():
             print('Error(s) exists in tokens, cannot parse file.')
     
 
-manip = Manipula('C:\\Users\\robero\\LCF Uplift\\Derived Variables\\parser\\sample_text.txt')          
+manip = Manipula('sample_text.txt')          
 print(repr(manip.file_string))
 print(manip.tokens)
 print(manip.expression)
