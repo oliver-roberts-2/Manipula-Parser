@@ -12,35 +12,34 @@ class Visitor:
     An interface that custom Visitors should implement.   
     
     '''    
-
     @abstractmethod
     def visit_assign(expression):
         ''' Visits assign expressions. '''
-        raise NotImplementedError
+        raise NotImplementedError('Not yet implemented')
         
 
     @abstractmethod
     def visit_binary(expression):
         ''' Visits binary expressions. '''
-        raise NotImplementedError
+        raise NotImplementedError('Not yet implemented')
         
 
     @abstractmethod
     def visit_grouping(expression):
         ''' Visits grouping expressions. '''
-        raise NotImplementedError
+        raise NotImplementedError('Not yet implemented')
 
     
     @abstractmethod
     def visit_literal(expression):
         ''' Visits literal expressions. '''
-        raise NotImplementedError
+        raise NotImplementedError('Not yet implemented')
      
       
     @abstractmethod
     def visit_unary(expression):
         ''' Visits unary expressions. '''
-        raise NotImplementedError
+        raise NotImplementedError('Not yet implemented')
        
         
 class Expression(ABC):
@@ -52,8 +51,9 @@ class Expression(ABC):
     @abstractmethod
     def accept(visitor):
         ''' The visistor traverses and accesses each object through this method. '''
-        raise NotImplementedError
-    
+        raise NotImplementedError('Not yet implemented')
+
+
 class Assign(Expression):
     
     
