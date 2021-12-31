@@ -4,7 +4,7 @@ File containing the Abstract Syntax Tree (AST) printer.
 '''
 
 
-from expressions import Visitor
+from expression import Visitor
 
 
 class AstPrinter(Visitor):

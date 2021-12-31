@@ -31,6 +31,8 @@ class Scanner():
             'TRUE': TokenType.TRUE,
             'FALSE': TokenType.FALSE,
             'WHILE': TokenType.WHILE,
+            'PRINT': TokenType.PRINT,
+            'VAR': TokenType.VAR,
             'NULL': None
             }
         

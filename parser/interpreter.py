@@ -4,20 +4,36 @@ File containing the interpreter class.
 '''
 
 
-from expressions import Visitor
 from tokens import TokenType
+from expression import Visitor as Expression_Visitor
+from statement import Visitor as Statement_Visitor
+from environment import Environment
 
 
-class Interpreter(Visitor):
+environment = Environment()
+
+
+class Interpreter(Expression_Visitor, Statement_Visitor):
     
     
-    def interpret(expression):
-        ''' Function to evaluate a syntax tree expression. '''
-        try:
-            value  = Interpreter.evaluate(expression)
-            print(Interpreter.stringify(value))
-        except:
-            raise RuntimeError()
+    def __init__(self):
+        pass
+    
+    
+    def interpret(self, statements):
+        ''' Function to interpret and execute a list of statements. '''
+        for statement in statements:
+            Interpreter.execute(statement)
+        # try:
+        #     for statement in statements:
+        #         Interpreter.execute(statement)
+        # except:
+        #     raise RuntimeError()
+            
+            
+    def execute(statement):
+        ''' Function to send statements back into the interpreter's visitor implementation. '''
+        statement.accept(Interpreter)
             
             
     def stringify(an_object):
@@ -34,7 +50,70 @@ class Interpreter(Visitor):
         ''' Function to send expression back into the interpreter's visitor implementation. '''
         return expression.accept(Interpreter)
     
+    # Statements
+        
+    def visit_expression(statement):
+        ''' Overwrites the Statement.visit_expression() class method. '''
+        Interpreter.evaluate(statement.expression)
+        return None
     
+    
+    def visit_print(statement):
+        ''' Overwrites the Statement.visit_print() class method. '''
+        value = Interpreter.evaluate(statement.expression)
+        print(Interpreter.stringify(value))
+        return None
+    
+    
+    def visit_variable_statement(statement):
+        ''' 
+        Overwrites the Statement.visit_variables_statements() class method.
+        
+        This sets a variable without an initialiser as None
+        
+        '''
+        value = None
+        if statement.initialiser != None:
+            value = Interpreter.evaluate(statement.initialiser)
+        environment.define(statement.name.lexeme, value)
+        
+        
+    def visit_if(statement):
+        ''' Overwrites the Statement.visit_if() class method. '''
+        if Interpreter.is_truthy(Interpreter.evaluate(statement.condition)):
+            Interpreter.execute(statement.then_branch)
+        elif statement.else_branch != None:
+            Interpreter.execute(statement.else_branch)
+        return None
+    
+    # Expressions
+    
+    def visit_variable_expression(expression):
+        ''' Overwrites the Expression.visit_variables_expression() class method. '''
+        return environment.get(expression.name.lexeme)   
+
+        
+    def visit_assign(expression):
+        ''' Overwrites the Expression.visit_assign() class method. '''
+        value = Interpreter.evalutate(expression.value)
+        environment.assign(expression.name, value)
+        return value
+    
+    
+    def visit_logical(expression):
+        ''' Overwrites the Expression.visit_logical() calss method. '''
+        left = Interpreter.evaluate(expression.left)
+        if expression.operator.type == TokenType.OR:
+            if Interpreter.is_truthy(left):
+                return left
+        else:
+            if Interpreter.is_truthy(left):
+                return left
+        return Interpreter.evaluate(expression.right)
+
+    
+    # Helper Functions
+
     def is_truthy(an_object):
         ''' 
         Function to determine the truth of an object.

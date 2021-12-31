@@ -43,6 +43,8 @@ class TokenType(Enum):
     NOT, IN = 'not', 'in'
     TRUE, FALSE = 'True', 'False'
     FOR, WHILE = 'for', 'while'
+    PRINT = 'print'
+    VAR = 'var'
     
     # End of file
     EOF = None

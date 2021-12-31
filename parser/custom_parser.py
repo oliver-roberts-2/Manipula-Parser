@@ -5,7 +5,8 @@ File containing the parser class.
 
 
 from tokens import TokenType
-from expressions import Assign, Binary, Grouping, Literal, Unary
+from expression import Assign, Binary, Grouping, Literal, Unary, Variable_Expression, Logical
+from statement import Expression, Print, Variable_Statement, If
 
 
 class Parser:
@@ -20,7 +21,99 @@ class Parser:
     
     def parse(self):
         ''' Function to kick off parsing. '''
-        return self.expression()
+        statements = []
+        while not self.at_end():
+            statements.append(self.declaration())
+        return statements
+    
+    
+    def declaration(self):
+        ''' Function to process list of declarations. '''
+        try:
+            if self.match([TokenType.VAR]):
+                return self.var_declaration()
+            else:
+                return self.statement()
+        except:
+            return None                
+    
+    
+    def var_declaration(self):
+        ''' Function to match identifier given a VAR TokenType. '''
+        name = self.consume(TokenType.IDENTIFIER, 'expect variable name')
+        initialiser = None
+        if self.match([TokenType.EQUAL]):
+            initialiser = self.expression()
+        return Variable_Statement(name, initialiser)
+    
+    
+    def statement(self):
+        ''' Function to parse one statement. '''
+        if self.match([TokenType.PRINT]):
+            return self.print_statement()
+        elif self.match([TokenType.IF]):
+            return self.if_statement()
+        else:
+            return self.expression_statement()
+        
+        
+    def if_statement(self):
+        ''' Function to handle an if statement. '''
+        self.consume(TokenType.LEFT_PAREN, 'expect an "(" after "if"')
+        condition = self.expression()
+        self.consume(TokenType.RIGHT_PAREN, 'expect an ")" after condition')
+        then_branch = self.statement()
+        else_branch = None
+        if self.match([TokenType.ELSE]):
+            else_branch = self.statement()
+        return If(condition, then_branch, else_branch)
+        
+        
+    def print_statement(self):
+        ''' Function to handle a print statement. '''
+        value = self.expression()
+        return Print(value)
+    
+    
+    def expression_statement(self):
+        ''' Function to handle an expression statement. '''
+        expression = self.expression()
+        return Expression(expression)
+    
+    
+    def assignment(self):
+        ''' Function to parse an assignment expression. '''
+        expression = self._or()
+        if self.match([TokenType.EQUAL]):
+            equals = self.previous()
+            value = self.assignment()
+            print(type(expression))
+            if type(expression) == Variable_Expression:
+                name = expression.name
+                return Assign(name, value)
+            else:
+                self.error(equals, 'invalid assignment target')
+        return expression
+                
+    
+    def _or(self):
+        ''' Function to parse a series of or expressions. '''
+        expression = self._and()
+        while self.match([TokenType.OR]):
+            operator = self.previous()
+            right = self._and()
+            expression = Logical(expression, operator, right)
+        return expression
+    
+    
+    def _and(self):
+        ''' Function to parse OR operands - AND. '''
+        expression = self.equality()
+        while self.match([TokenType.AND]):
+            operator = self.previous()
+            right = self.equality()
+            expression = Logical(expression, operator, right)
+        return expression
     
     
     def peek(self):
@@ -42,8 +135,7 @@ class Parser:
         ''' Function to consume current token, otherwise return previous. '''
         if not self.at_end():
             self.current += 1
-        else:
-            return self.previous()
+        return self.previous()
 
     
     def check(self, token_type):
@@ -66,6 +158,7 @@ class Parser:
     def consume(self, token_type, message):
         ''' Function to match a token and consme, but raise error otheriwse, '''
         if self.check(token_type):
+            
             return self.advance()
         else:
             self.error(self.peek(), message)
@@ -145,18 +238,19 @@ class Parser:
             return Literal(True)
         elif self.match([TokenType.NUMBER, TokenType.STRING]):
             return Literal(self.previous().literal)
+        elif self.match([TokenType.IDENTIFIER]):
+            return Variable_Expression(self.previous())
         elif self.match([TokenType.LEFT_PAREN]):
             expression = self.expression()
             self.consume(TokenType.RIGHT_PAREN, 'expect ")" after expression')
             return Grouping(expression)
         else:
-            print(self.peek())
             self.error(self.peek(), 'expect expression')
 
 
     def expression(self):
         ''' Function for expressions. '''
-        return self.equality()
+        return self.assignment()
     
 
     
