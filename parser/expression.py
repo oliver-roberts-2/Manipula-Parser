@@ -52,6 +52,12 @@ class Visitor:
     def visit_logical(expression):
         ''' Visits logical expressions. '''
         raise NotImplementedError('Not yet implemented')
+        
+        
+    @abstractmethod
+    def visit_list(expression):
+        ''' Visits list expressions. '''
+        raise NotImplementedError('Not yet implemented')
        
         
 class Expression(ABC):
@@ -156,6 +162,18 @@ class Logical(Expression):
         
         
     def accept(self, visitor):
-        return visitor.visit_logical(self)    
+        return visitor.visit_logical(self)   
+    
+
+class List(Expression):
+
+    
+    def __init__(self, sequence):
+        super().__init__()
+        self.sequence = sequence
+
+        
+    def accept(self, visitor):
+        return visitor.visit_list(self)     
          
         

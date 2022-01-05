@@ -9,7 +9,7 @@ from custom_parser import Parser
 from interpreter import Interpreter
 
 
-class Manipula():
+class Manipula:
     
     # lexemes are raw substrings of the source code
     # e.g. `language` `=` `'manipula'`
@@ -42,9 +42,9 @@ class Manipula():
         self.statements = self.parser.parse()
         if self.parser.had_error:
             print('Error(s) exists in tokens, cannot parse file.')
-        self.interpreter.interpret(self.statements)
+        #self.interpreter.interpret(self.statements)
     
 
-manip = Manipula('sample_text.txt')          
+manip = Manipula('sample_text.txt')
 
 

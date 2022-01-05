@@ -34,6 +34,24 @@ class Visitor:
     def visit_if(statement):
         ''' Visits If statements. '''
         raise NotImplementedError('Not yet implemented')
+        
+        
+    @abstractmethod
+    def visit_elif(statement):
+        ''' Visits Elif statements. '''
+        raise NotImplementedError('Not yet implemented')
+        
+        
+    @abstractmethod
+    def visit_while(statement):
+        ''' Visits While statements. '''
+        raise NotImplementedError('Not yet implemented')
+        
+        
+    @abstractmethod
+    def visit_for(statement):
+        ''' Visits For statements. '''
+        raise NotImplementedError('Not yet implemented')
               
         
 class Statement(ABC):
@@ -87,15 +105,58 @@ class Variable_Statement(Statement):
 
 class If(Statement):
     
-    def __init__(self, condition, then_branch, else_branch):
+    
+    def __init__(self, condition, then_branch, elif_list, else_branch):
         super().__init__()
         self.condition = condition
         self.then_branch = then_branch
+        self.elif_list = elif_list
         self.else_branch = else_branch
         
         
     def accept(self, visitor):
-        return visitor.visit_if(self)    
+        return visitor.visit_if(self)  
+    
+    
+class Elif(Statement):
+    
+    
+    def __init__(self, condition, then_branch):
+        super().__init__()
+        self.condition = condition
+        self.then_branch = then_branch
+        
+        
+    def accept(self, visitor):
+        return visitor.visit_elif(self) 
+    
+    
+class While(Statement):
+    
+    
+    def __init__(self, condition, body):
+        super().__init__()
+        self.condition = condition
+        self.body = body
+        
+        
+    def accept(self, visitor):
+        return visitor.visit_while(self)   
+    
+    
+class For(Statement):
+    
+    
+    def __init__(self, initialiser, condition, increment, body):
+        super().__init__()
+        self.initialiser = initialiser
+        self.condition = condition
+        self.increment = increment
+        self.body = body
+        
+        
+    def accept(self, visitor):
+        return visitor.visit_for(self)
         
     
     

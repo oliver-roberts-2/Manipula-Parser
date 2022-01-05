@@ -1,5 +1,19 @@
-VAR x = 1
-VAR y = 2
+{VAR x := 1
+VAR y := 2 + 2
 PRINT x * y/4
-IF (x > y) PRINT y
-ELSE PRINT 'Failed'
+IF (x = y) THEN
+    IF (x > 0) THEN PRINT 'x is greater than 0'
+    ELSEIF (x < y) THEN PRINT 'Less than'
+    ELSEIF (x > y) THEN PRINT 'Greater than'
+    ELSE PRINT 'x is greater'
+    ENDIF
+ELSE PRINT 'First if statement'
+ENDIF
+FOR (z := 1, z < 3, z := z + 1)
+PRINT z
+ENDDO
+abc.def[2] := 'response'}
+
+{VAR a := [x, y, z]
+PRINT a
+w IN [w, h, o]}

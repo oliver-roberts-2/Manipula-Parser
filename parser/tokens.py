@@ -39,10 +39,13 @@ class TokenType(Enum):
 
     # Keywords
     IF, ELIF, ELSE = 'if', 'elif', 'else'
+    THEN = ':'
     AND, OR = 'and', 'or'
     NOT, IN = 'not', 'in'
     TRUE, FALSE = 'True', 'False'
     FOR, WHILE = 'for', 'while'
+    ENDDO, ENDIF = 'enddo', 'endif'
+    RANGE = 'range'
     PRINT = 'print'
     VAR = 'var'
     

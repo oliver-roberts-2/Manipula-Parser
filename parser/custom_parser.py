@@ -5,8 +5,8 @@ File containing the parser class.
 
 
 from tokens import TokenType
-from expression import Assign, Binary, Grouping, Literal, Unary, Variable_Expression, Logical
-from statement import Expression, Print, Variable_Statement, If
+from expression import Assign, Binary, Grouping, Literal, Unary, Variable_Expression, Logical, List
+from statement import Expression, Print, Variable_Statement, If, Elif, While, For
 
 
 class Parser:
@@ -51,22 +51,84 @@ class Parser:
         ''' Function to parse one statement. '''
         if self.match([TokenType.PRINT]):
             return self.print_statement()
+        elif self.match([TokenType.FOR]):
+            return self.for_statement()
         elif self.match([TokenType.IF]):
             return self.if_statement()
+        elif self.match([TokenType.WHILE]):
+            return self.while_statement()
         else:
             return self.expression_statement()
+        
+    
+    def for_statement(self):
+        ''' Function to handle a for statement. '''
+        self.consume(TokenType.LEFT_PAREN, 'expect a "(" after "while"')
+        
+        # Initialiser
+        if self.match([TokenType.COMMA]):
+            initialiser = None
+        elif self.match([TokenType.VAR]):
+            initialiser = self.var_declaration()
+        else:
+            initialiser = self.expression_statement()
+        self.consume(TokenType.COMMA, 'expect "," after loop condition')
+        
+        # Condition
+        condition = None
+        if not self.check(TokenType.COMMA):
+            condition = self.expression()
+        self.consume(TokenType.COMMA, 'expect "," after loop condition')
+        
+        # Increment
+        increment = None
+        if not self.check(TokenType.RIGHT_PAREN):
+            increment = self.expression()
+        self.consume(TokenType.RIGHT_PAREN, 'expect a ")" after condition')
+        
+        # Body
+        body = None
+        if not self.check(TokenType.ENDDO):
+            body = self.statement()
+        self.consume(TokenType.ENDDO, 'expect an "ENDDO" after for statement')
+        return For(initialiser, condition, increment, body)
+    
+        
+    def while_statement(self):
+        ''' Function to handle a while statement. '''
+        self.consume(TokenType.LEFT_PAREN, 'expect a "(" after "while"')
+        condition = self.expression()
+        self.consume(TokenType.RIGHT_PAREN, 'expect a ")" after condition')
+        body = self.statement()
+        return While(condition, body)
         
         
     def if_statement(self):
         ''' Function to handle an if statement. '''
-        self.consume(TokenType.LEFT_PAREN, 'expect an "(" after "if"')
+        self.consume(TokenType.LEFT_PAREN, 'expect a "(" after "if"')
         condition = self.expression()
-        self.consume(TokenType.RIGHT_PAREN, 'expect an ")" after condition')
+        self.consume(TokenType.RIGHT_PAREN, 'expect a ")" after condition')
+        self.consume(TokenType.THEN, 'expect a "THEN" after condition')
         then_branch = self.statement()
+        
+        # Elif
+        elif_list = []
+        while self.match([TokenType.ELIF]):
+            self.consume(TokenType.LEFT_PAREN, 'expect a "(" after "if"')
+            condition = self.expression()
+            self.consume(TokenType.RIGHT_PAREN, 'expect a ")" after condition')
+            self.consume(TokenType.THEN, 'expect a "THEN" after condition')
+            then_branch = self.statement()    
+            elif_list.append(Elif(condition, then_branch))
+            
+        # Else
         else_branch = None
         if self.match([TokenType.ELSE]):
             else_branch = self.statement()
-        return If(condition, then_branch, else_branch)
+            
+        # Consume ENDIF
+        self.consume(TokenType.ENDIF, 'expect an "ENDIF" after if statement')
+        return If(condition, then_branch, elif_list, else_branch)
         
         
     def print_statement(self):
@@ -80,41 +142,12 @@ class Parser:
         expression = self.expression()
         return Expression(expression)
     
-    
-    def assignment(self):
-        ''' Function to parse an assignment expression. '''
-        expression = self._or()
-        if self.match([TokenType.EQUAL]):
-            equals = self.previous()
-            value = self.assignment()
-            print(type(expression))
-            if type(expression) == Variable_Expression:
-                name = expression.name
-                return Assign(name, value)
-            else:
-                self.error(equals, 'invalid assignment target')
-        return expression
-                
-    
-    def _or(self):
-        ''' Function to parse a series of or expressions. '''
-        expression = self._and()
-        while self.match([TokenType.OR]):
-            operator = self.previous()
-            right = self._and()
-            expression = Logical(expression, operator, right)
-        return expression
-    
-    
-    def _and(self):
-        ''' Function to parse OR operands - AND. '''
-        expression = self.equality()
-        while self.match([TokenType.AND]):
-            operator = self.previous()
-            right = self.equality()
-            expression = Logical(expression, operator, right)
-        return expression
-    
+        
+    def expression(self):
+        ''' Function for expressions. '''
+        return self.assignment()   
+
+    # Helper Functions
     
     def peek(self):
         ''' Function to peek the next token without consuming it. '''
@@ -170,12 +203,48 @@ class Parser:
         if token.type == TokenType.EOF:
             error_message = f'{token.type} at end {message}'
             self.errors.append(error_message)
+            print(error_message)
         else:
             error_message = f'"{token.lexeme}" on line {token.line_number}: {message}'
             self.errors.append(error_message)
+            print(error_message)
         raise Exception(error_message)
-            
         
+        # Assignment, or, and expressions
+        
+    def assignment(self):
+        ''' Function to parse an assignment expression. '''
+        expression = self._or()
+        if self.match([TokenType.EQUAL]):
+            equals = self.previous()
+            value = self.assignment()
+            if type(expression) == Variable_Expression: 
+                name = expression.name
+                return Assign(name, value)
+            else:
+                self.error(equals, 'invalid assignment target')
+        return expression
+                
+    
+    def _or(self):
+        ''' Function to parse a series of or expressions. '''
+        expression = self._and()
+        while self.match([TokenType.OR]):
+            operator = self.previous()
+            right = self._and()
+            expression = Logical(expression, operator, right)
+        return expression
+    
+    
+    def _and(self):
+        ''' Function to parse OR operands - AND. '''
+        expression = self.equality()
+        while self.match([TokenType.AND]):
+            operator = self.previous()
+            right = self.equality()
+            expression = Logical(expression, operator, right)
+        return expression
+                
     # Binary Operators ...
 
     def equality(self):
@@ -189,10 +258,10 @@ class Parser:
     
     
     def comparison(self):
-        ''' Function for the comparison rule. '''
+        ''' Function for the comparison and IN rule. '''
         expression = self.term()
         while self.match([TokenType.GREATER, TokenType.GREATER_EQUAL,
-                         TokenType.LESS, TokenType.LESS_EQUAL]):
+                         TokenType.LESS, TokenType.LESS_EQUAL, TokenType.IN]):
             operator = self.previous()
             right = self.term()
             expression = Binary(expression, operator, right)
@@ -229,7 +298,7 @@ class Parser:
         else:
             return self.primary()
         
-        
+                
     def primary(self):
         ''' Function for primary expressions. '''
         if self.match([TokenType.FALSE]): 
@@ -244,14 +313,15 @@ class Parser:
             expression = self.expression()
             self.consume(TokenType.RIGHT_PAREN, 'expect ")" after expression')
             return Grouping(expression)
+        elif self.match([TokenType.LEFT_SQUARE]):
+            sequence = [self.expression()]
+            while self.match([TokenType.COMMA]):
+                sequence.append(self.expression())
+            self.consume(TokenType.RIGHT_SQUARE, 'expect "]" at end of list')
+            return List(sequence)      
         else:
             self.error(self.peek(), 'expect expression')
 
-
-    def expression(self):
-        ''' Function for expressions. '''
-        return self.assignment()
-    
 
     
     

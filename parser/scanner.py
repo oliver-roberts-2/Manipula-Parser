@@ -27,7 +27,10 @@ class Scanner():
             'OR': TokenType.OR,
             'FOR': TokenType.FOR,
             'IN': TokenType.IN,
-            'THEN': TokenType.COLON,
+            'TO': TokenType.RANGE,
+            'THEN': TokenType.THEN,
+            'ENDIF': TokenType.ENDIF,
+            'ENDDO': TokenType.ENDDO,
             'TRUE': TokenType.TRUE,
             'FALSE': TokenType.FALSE,
             'WHILE': TokenType.WHILE,
@@ -99,7 +102,7 @@ class Scanner():
         unsure if Manipula allows these.
         
         '''
-        while not (self.peek() == '"' or self.peek() == "'") and not self.at_end():
+        while not self.peek() == "'" and not self.at_end():
             if self.peek() == '\n':
                 self.line_number += 1
             self.advance()
@@ -107,7 +110,7 @@ class Scanner():
         if self.at_end():
             self.error('Untermenated string')
         
-        # Consuming the closing " or '           
+        # Consuming the closing '           
         self.advance()
         
         # Trim surrounding quotes and add token
@@ -145,6 +148,20 @@ class Scanner():
             return False
         
         
+    def is_reference(self, character):
+        ''' 
+        Function to determine if character is part of an
+        object parameter or method.
+        
+        '''
+        if character == '.':
+            return True
+        elif character == '[' or character == ']':
+            return True
+        else:
+            return False        
+        
+        
     def identifier(self):
         ''' Function to handle identifier literals. '''
         while self.is_alpha_numeric(self.peek()):
@@ -161,7 +178,7 @@ class Scanner():
         
     def is_alpha_numeric(self, character):
         ''' Function to determine if character is alphanumeric. '''
-        return self.is_alpha(character) or self.is_digit(character)
+        return self.is_alpha(character) or self.is_digit(character)# or self.is_reference(character)
         
         
     def scan_token(self):
@@ -210,9 +227,9 @@ class Scanner():
         elif character == '-': self.add_token(TokenType.MINUS) 
         elif character == '+': self.add_token(TokenType.PLUS) 
         elif character == ';': self.add_token(TokenType.SEMICOLON)
-        elif character == ':': self.add_token(TokenType.COLON)
         elif character == '/': self.add_token(TokenType.FWD_SLASH) 
-        elif character == '*': self.add_token(TokenType.STAR) 
+        elif character == '*': self.add_token(TokenType.STAR)
+        elif character == '=': self.add_token(TokenType.EQUAL_EQUAL)
         
         # Handle curley braces slightly differently as they are comments
         elif character == '{':
@@ -231,11 +248,11 @@ class Scanner():
                 self.add_token(TokenType.BANG_EQUAL)
             else:
                 self.add_token(TokenType.BANG)
-        elif character == '=':
+        elif character == ':':
             if self.match_next('='):
-                self.add_token(TokenType.EQUAL_EQUAL)
-            else:
                 self.add_token(TokenType.EQUAL)
+            else:
+                self.add_token(TokenType.COLON)
         elif character == '>':
             if self.match_next('='):
                 self.add_token(TokenType.GREATER_EQUAL)
@@ -255,7 +272,7 @@ class Scanner():
             self.line_number += 1
                    
         # Literals
-        elif character == '"' or character == "'": self.string()
+        elif character == "'": self.string()
         elif self.is_digit(character): self.number()
         elif self.is_alpha(character): self.identifier()
          

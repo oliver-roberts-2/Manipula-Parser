@@ -86,6 +86,14 @@ class Interpreter(Expression_Visitor, Statement_Visitor):
             Interpreter.execute(statement.else_branch)
         return None
     
+    
+    def visit_while(statement):
+        ''' Overwrites the Statement.visit_while() class method. '''
+        while Interpreter.is_truthy(Interpreter.evaluate(statement.condition)):
+            Interpreter.execute(statement.body)
+        return None
+    
+    
     # Expressions
     
     def visit_variable_expression(expression):
@@ -95,7 +103,7 @@ class Interpreter(Expression_Visitor, Statement_Visitor):
         
     def visit_assign(expression):
         ''' Overwrites the Expression.visit_assign() class method. '''
-        value = Interpreter.evalutate(expression.value)
+        value = Interpreter.evaluate(expression.value)
         environment.assign(expression.name, value)
         return value
     
@@ -194,8 +202,11 @@ class Interpreter(Expression_Visitor, Statement_Visitor):
         elif expression.operator.type == TokenType.LESS_EQUAL:
             Interpreter.check_number_operands(expression.operator, left, right)
             return left <= right
+        elif expression.operator.type == TokenType.IN:
+            # Add check for right hand side operator to be a list
+            return left in right
         
-        # Comparison Operators
+        # Equality Operators
         elif expression.operator.type == TokenType.BANG_EQUAL:
             return not Interpreter.is_equal(left, right)
         elif expression.operator.type == TokenType.EQUAL_EQUAL:
