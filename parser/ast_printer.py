@@ -130,12 +130,18 @@ class AstPrinter(Expression_Visitor, Statement_Visitor):
     def visit_if(statement):
         ''' Overwrites the Statement.visit_if() class method.'''
         if statement.else_branch == None:
-            return AstPrinter.parenthesise('if', [statement.condition,
+            return AstPrinter.parenthesise2('if', [statement.condition,
                                                   statement.then_branch])
         else:
-            return AstPrinter.parenthesise('if-else', [statement.condition,
+            return AstPrinter.parenthesise2('if-else', [statement.condition,
                                                        statement.then_branch,
                                                        statement.else_branch])
+        
+        
+    def visit_for(statement):
+        ''' Overwrites the Statement.visit_for() class method. '''
+        return AstPrinter.parenthesise2('for', [statement.condition,
+                                               statement.body])
     
     
     def visit_print(statement):

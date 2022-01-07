@@ -13,7 +13,7 @@ class Visitor:
     
     '''    
     @abstractmethod
-    def visit_expression(statement):
+    def visit_expression_statement(statement):
         ''' Visits Expression statements. '''
         raise NotImplementedError('Not yet implemented')
         
@@ -75,7 +75,7 @@ class Expression(Statement):
         
         
     def accept(self, visitor):
-        return visitor.visit_expression(self)
+        return visitor.visit_expression_statement(self)
         
 
 class Print(Statement):
@@ -147,11 +147,9 @@ class While(Statement):
 class For(Statement):
     
     
-    def __init__(self, initialiser, condition, increment, body):
+    def __init__(self, initialiser, body):
         super().__init__()
         self.initialiser = initialiser
-        self.condition = condition
-        self.increment = increment
         self.body = body
         
         

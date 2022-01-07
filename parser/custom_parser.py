@@ -4,8 +4,8 @@ File containing the parser class.
 '''
 
 
-from tokens import TokenType
-from expression import Assign, Binary, Grouping, Literal, Unary, Variable_Expression, Logical, List
+from tokens import TokenType, Token
+from expression import Assign, Binary, Grouping, Literal, Unary, Variable_Expression, Multi_Identifier_Variable_Expression, Logical, List, Range
 from statement import Expression, Print, Variable_Statement, If, Elif, While, For
 
 
@@ -29,22 +29,43 @@ class Parser:
     
     def declaration(self):
         ''' Function to process list of declarations. '''
-        try:
-            if self.match([TokenType.VAR]):
-                return self.var_declaration()
-            else:
-                return self.statement()
-        except:
-            return None                
+        if self.check(TokenType.IDENTIFIER):
+            return self.var_declaration()
+        else:
+            return self.statement()               
+    
+    
+    def build_identifier(self):
+        ''' Function to build an identifier if . or [ are present. '''
+        names = [self.consume(TokenType.IDENTIFIER, 'expect variable name')]
+        bracket_counter = 0
+        while self.match_no_consume([TokenType.DOT, TokenType.LEFT_SQUARE,
+                                     TokenType.IDENTIFIER, TokenType.RIGHT_SQUARE]):
+            if self.check(TokenType.LEFT_SQUARE):
+                bracket_counter += 1
+            elif self.check(TokenType.RIGHT_SQUARE):
+                if bracket_counter != 0:
+                    bracket_counter -= 1
+                else:
+                    break
+            names.append(self.advance())            
+        return Multi_Identifier_Variable_Expression(names)
     
     
     def var_declaration(self):
-        ''' Function to match identifier given a VAR TokenType. '''
-        name = self.consume(TokenType.IDENTIFIER, 'expect variable name')
-        initialiser = None
-        if self.match([TokenType.EQUAL]):
+        ''' Function to match identifier given an IDENTIFIER TokenType. '''
+        if self.peek_next().type == TokenType.DOT or self.peek_next().type == TokenType.LEFT_SQUARE:
+            name = self.build_identifier()
+            self.consume(TokenType.EQUAL, 'expect ":=" after variable name')
             initialiser = self.expression()
-        return Variable_Statement(name, initialiser)
+            return Variable_Statement(name, initialiser)
+        elif self.peek_next().type == TokenType.EQUAL:
+            name = self.consume(TokenType.IDENTIFIER, 'expect variable name')
+            self.consume(TokenType.EQUAL, 'expect ":=" after variable name')
+            initialiser = self.expression()
+            return Variable_Statement(name, initialiser)
+        else:
+            return self.statement()
     
     
     def statement(self):
@@ -63,35 +84,19 @@ class Parser:
     
     def for_statement(self):
         ''' Function to handle a for statement. '''
-        self.consume(TokenType.LEFT_PAREN, 'expect a "(" after "while"')
-        
-        # Initialiser
-        if self.match([TokenType.COMMA]):
-            initialiser = None
-        elif self.match([TokenType.VAR]):
+        # Initialiser/Condition
+        if self.check(TokenType.IDENTIFIER):
             initialiser = self.var_declaration()
         else:
-            initialiser = self.expression_statement()
-        self.consume(TokenType.COMMA, 'expect "," after loop condition')
-        
-        # Condition
-        condition = None
-        if not self.check(TokenType.COMMA):
-            condition = self.expression()
-        self.consume(TokenType.COMMA, 'expect "," after loop condition')
-        
-        # Increment
-        increment = None
-        if not self.check(TokenType.RIGHT_PAREN):
-            increment = self.expression()
-        self.consume(TokenType.RIGHT_PAREN, 'expect a ")" after condition')
-        
+            self.error(self.tokens[self.current], 'expect IDENTIFIER after "FOR"')
+        self.consume(TokenType.DO, 'expect "DO" after FOR initialiser')
+
         # Body
-        body = None
-        if not self.check(TokenType.ENDDO):
-            body = self.statement()
+        body = []
+        while not self.check(TokenType.ENDDO):
+            body.append(self.statement())
         self.consume(TokenType.ENDDO, 'expect an "ENDDO" after for statement')
-        return For(initialiser, condition, increment, body)
+        return For(initialiser, body)
     
         
     def while_statement(self):
@@ -154,6 +159,11 @@ class Parser:
         return self.tokens[self.current]
     
     
+    def peek_next(self):
+        ''' Function to peek the next token plus 1 without consuming it. '''
+        return self.tokens[self.current+1]
+    
+    
     def at_end(self):
         ''' Function to determine if at end of token list. '''
         return self.peek().type == TokenType.EOF
@@ -187,6 +197,14 @@ class Parser:
                 return True
         return False
     
+    
+    def match_no_consume(self, types):
+        ''' Function to match certain token type(s) but dont consume. '''
+        for token_type in types:
+            if self.check(token_type):
+                return True
+        return False
+
     
     def consume(self, token_type, message):
         ''' Function to match a token and consme, but raise error otheriwse, '''
@@ -229,8 +247,11 @@ class Parser:
     def _or(self):
         ''' Function to parse a series of or expressions. '''
         expression = self._and()
+        if self.peek_next().type == TokenType.OR:
+            self.consume(TokenType.RIGHT_PAREN, 'expect ")" between condition and "OR"')
         while self.match([TokenType.OR]):
             operator = self.previous()
+            self.consume(TokenType.LEFT_PAREN, 'expect "(" between "OR" and condition')
             right = self._and()
             expression = Logical(expression, operator, right)
         return expression
@@ -238,11 +259,23 @@ class Parser:
     
     def _and(self):
         ''' Function to parse OR operands - AND. '''
-        expression = self.equality()
+        expression = self._range()
+        if self.peek_next().type == TokenType.AND:
+            self.consume(TokenType.RIGHT_PAREN, 'expect ")" between condition and "AND"')
         while self.match([TokenType.AND]):
             operator = self.previous()
-            right = self.equality()
+            self.consume(TokenType.LEFT_PAREN, 'expect "(" between "AND" and condition')
+            right = self._range()
             expression = Logical(expression, operator, right)
+        return expression
+    
+    
+    def _range(self):
+        ''' Function to parse a range operation. '''
+        expression = self.equality()
+        while self.match([TokenType.TO]):
+            right = self.equality()
+            expression = Range(expression, right)
         return expression
                 
     # Binary Operators ...
@@ -307,21 +340,39 @@ class Parser:
             return Literal(True)
         elif self.match([TokenType.NUMBER, TokenType.STRING]):
             return Literal(self.previous().literal)
-        elif self.match([TokenType.IDENTIFIER]):
-            return Variable_Expression(self.previous())
+        elif self.check(TokenType.IDENTIFIER):
+            if self.peek_next().type == TokenType.DOT or self.peek_next().type == TokenType.LEFT_SQUARE:
+                return Variable_Expression(self.build_identifier())
+            else:
+                self.match([TokenType.IDENTIFIER])
+                return Variable_Expression(self.previous())
         elif self.match([TokenType.LEFT_PAREN]):
             expression = self.expression()
             self.consume(TokenType.RIGHT_PAREN, 'expect ")" after expression')
             return Grouping(expression)
         elif self.match([TokenType.LEFT_SQUARE]):
             sequence = [self.expression()]
+            # Handles list elements seperated by commas
             while self.match([TokenType.COMMA]):
                 sequence.append(self.expression())
+            # Handles range lists
+            if self.peek().type == TokenType.DOT:
+                while self.match([TokenType.DOT]):
+                    continue
+                upper = self.consume(TokenType.NUMBER, 'expect NUMBER as upper limit')
+                # Generate list of literal expressions representing given range
+                for i in range(int(sequence[0].value)+1, int(upper.literal+1)):
+                    sequence.append(Literal(self.add_token(TokenType.NUMBER, float(i)).literal)) 
             self.consume(TokenType.RIGHT_SQUARE, 'expect "]" at end of list')
             return List(sequence)      
         else:
             self.error(self.peek(), 'expect expression')
 
 
+    def add_token(self, token_type, literal=None):
+        ''' Function to add token to when encountering a range list. '''
+        lexeme = str(literal)
+        token = Token(token_type, lexeme, literal, None)
+        return token
     
     

@@ -17,6 +17,7 @@ class Scanner():
         self.tokens = []
         self.current = 0
         self.line_number = 1
+        self.braces_counter = 0
         
         # Dictionary of Manipula keywords
         self.keywords = {
@@ -27,8 +28,9 @@ class Scanner():
             'OR': TokenType.OR,
             'FOR': TokenType.FOR,
             'IN': TokenType.IN,
-            'TO': TokenType.RANGE,
+            'TO': TokenType.TO,
             'THEN': TokenType.THEN,
+            'DO': TokenType.DO,
             'ENDIF': TokenType.ENDIF,
             'ENDDO': TokenType.ENDDO,
             'TRUE': TokenType.TRUE,
@@ -148,20 +150,6 @@ class Scanner():
             return False
         
         
-    def is_reference(self, character):
-        ''' 
-        Function to determine if character is part of an
-        object parameter or method.
-        
-        '''
-        if character == '.':
-            return True
-        elif character == '[' or character == ']':
-            return True
-        else:
-            return False        
-        
-        
     def identifier(self):
         ''' Function to handle identifier literals. '''
         while self.is_alpha_numeric(self.peek()):
@@ -178,8 +166,22 @@ class Scanner():
         
     def is_alpha_numeric(self, character):
         ''' Function to determine if character is alphanumeric. '''
-        return self.is_alpha(character) or self.is_digit(character)# or self.is_reference(character)
+        return self.is_alpha(character) or self.is_digit(character)
         
+    
+    def consume_comment(self):
+        ''' Function to consume a comment. '''
+        while not self.peek() == '}':
+            if self.at_end():
+                self.error('Unmatched character "{"')
+            elif self.peek() == '{':
+                self.braces_counter += 1
+                self.advance()
+                continue
+            else:
+                if self.peek() == '\n': self.line_number += 1
+                self.advance()
+    
         
     def scan_token(self):
         '''
@@ -233,14 +235,19 @@ class Scanner():
         
         # Handle curley braces slightly differently as they are comments
         elif character == '{':
-            while not self.match_next('}'):
-                if self.at_end():
-                    self.error(f'Unmatched character "{character}"')
-                else:
-                    if self.peek() == '\n': self.line_number += 1
-                    self.advance()
+            start = self.current
+            self.consume_comment()
+            # We are at {...
+            while self.braces_counter != 0:
+                self.braces_counter -= 1
+                self.advance()
+                self.consume_comment()
+            # Consume last }
+            self.advance()
+            print('Comment...')
+            print(self.source[start-1:self.current])
         elif character == '}':
-            self.error(f'Unmatched character "{character}"')
+            self.error(f'Unmatched character "{character}"')       
         
         # One or two character tokens
         elif character == '!':
@@ -261,6 +268,8 @@ class Scanner():
         elif character == '<':
             if self.match_next('='):
                 self.add_token(TokenType.LESS_EQUAL)
+            elif self.match_next('>'):
+                self.add_token(TokenType.BANG_EQUAL)
             else:
                 self.add_token(TokenType.LESS)
                 

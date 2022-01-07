@@ -1,5 +1,8 @@
-{VAR x := 1
-VAR y := 2 + 2
+{{x := 1}{another comment}more comment{}}
+y := 2 + 2
+b := [g, h, i.block1[j]]
+c := [1, 2, 3]
+d := variable.block2.block3[k]
 PRINT x * y/4
 IF (x = y) THEN
     IF (x > 0) THEN PRINT 'x is greater than 0'
@@ -9,11 +12,10 @@ IF (x = y) THEN
     ENDIF
 ELSE PRINT 'First if statement'
 ENDIF
-FOR (z := 1, z < 3, z := z + 1)
+FOR z := 1 TO variable.block2[j] DO
 PRINT z
+FOR x := 3 TO 20 DO
+PRINT x
+PRINT 'Nested For'
 ENDDO
-abc.def[2] := 'response'}
-
-{VAR a := [x, y, z]
-PRINT a
-w IN [w, h, o]}
+ENDDO

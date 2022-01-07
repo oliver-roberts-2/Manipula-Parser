@@ -11,12 +11,6 @@ from interpreter import Interpreter
 
 class Manipula:
     
-    # lexemes are raw substrings of the source code
-    # e.g. `language` `=` `'manipula'`
-    # tokens are lexems bundled together with other data, tokens are formed
-    # e.g. is that lexeme a keyword?
-    # Trees:
-    # Leaf nodes are numbers, and interior nodes are operators with branches for each of their operands.
 
     def __init__(self, path_to_file):
         self.path_to_file = path_to_file

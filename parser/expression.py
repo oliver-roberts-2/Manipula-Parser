@@ -43,6 +43,12 @@ class Visitor:
         
 
     @abstractmethod
+    def visit_multi_identifier_variable_expression(expression):
+        ''' Visits multi-identifier variable expressions. '''
+        raise NotImplementedError('Not yet implemented')
+        
+
+    @abstractmethod
     def visit_assign(expression):
         ''' Visits assign expressions. '''
         raise NotImplementedError('Not yet implemented')
@@ -57,6 +63,12 @@ class Visitor:
     @abstractmethod
     def visit_list(expression):
         ''' Visits list expressions. '''
+        raise NotImplementedError('Not yet implemented')
+        
+        
+    @abstractmethod
+    def visit_range(expression):
+        ''' Visits range expressions. '''
         raise NotImplementedError('Not yet implemented')
        
         
@@ -135,7 +147,19 @@ class Variable_Expression(Expression):
         
         
     def accept(self, visitor):
-        return visitor.visit_variable_expression(self) 
+        return visitor.visit_variable_expression(self)
+    
+    
+class Multi_Identifier_Variable_Expression(Expression):
+    
+
+    def __init__(self, names):
+        super().__init__()
+        self.names = names # Must be a list 
+        
+        
+    def accept(self, visitor):
+        return visitor.visit_multi_identifier_variable_expression(self)
     
     
 class Assign(Expression):
@@ -174,6 +198,19 @@ class List(Expression):
 
         
     def accept(self, visitor):
-        return visitor.visit_list(self)     
+        return visitor.visit_list(self)
+
+        
+class Range(Expression):
+
+    
+    def __init__(self, lower, upper):
+        super().__init__()
+        self.lower = lower
+        self.upper = upper
+
+        
+    def accept(self, visitor):
+        return visitor.visit_range(self)
          
         

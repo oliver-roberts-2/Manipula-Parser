@@ -39,7 +39,7 @@ class TokenType(Enum):
 
     # Keywords
     IF, ELIF, ELSE = 'if', 'elif', 'else'
-    THEN = ':'
+    THEN, DO, TO = ':', 'do', 'to'
     AND, OR = 'and', 'or'
     NOT, IN = 'not', 'in'
     TRUE, FALSE = 'True', 'False'
