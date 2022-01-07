@@ -235,7 +235,6 @@ class Scanner():
         
         # Handle curley braces slightly differently as they are comments
         elif character == '{':
-            start = self.current
             self.consume_comment()
             # We are at {...
             while self.braces_counter != 0:
@@ -244,8 +243,6 @@ class Scanner():
                 self.consume_comment()
             # Consume last }
             self.advance()
-            print('Comment...')
-            print(self.source[start-1:self.current])
         elif character == '}':
             self.error(f'Unmatched character "{character}"')       
         

@@ -161,7 +161,10 @@ class Parser:
     
     def peek_next(self):
         ''' Function to peek the next token plus 1 without consuming it. '''
-        return self.tokens[self.current+1]
+        try:
+            return self.tokens[self.current+1]
+        except:
+            return
     
     
     def at_end(self):

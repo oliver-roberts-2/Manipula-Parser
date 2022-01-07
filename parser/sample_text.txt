@@ -1,9 +1,13 @@
 {{x := 1}{another comment}more comment{}}
-y := 2 + 2
+t := [1..10]
+y := 2
 b := [g, h, i.block1[j]]
 c := [1, 2, 3]
 d := variable.block2.block3[k]
-PRINT x * y/4
+FOR z := 1 TO variable.block2[j] DO
+PRINT z
+ENDDO
+{
 IF (x = y) THEN
     IF (x > 0) THEN PRINT 'x is greater than 0'
     ELSEIF (x < y) THEN PRINT 'Less than'
@@ -19,3 +23,5 @@ PRINT x
 PRINT 'Nested For'
 ENDDO
 ENDDO
+t := [1..10]
+}
