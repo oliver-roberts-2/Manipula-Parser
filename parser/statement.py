@@ -106,11 +106,11 @@ class Variable_Statement(Statement):
 class If(Statement):
     
     
-    def __init__(self, condition, then_branch, elif_list, else_branch):
+    def __init__(self, condition, then_branch, elif_branch, else_branch):
         super().__init__()
         self.condition = condition
         self.then_branch = then_branch
-        self.elif_list = elif_list
+        self.elif_branch = elif_branch
         self.else_branch = else_branch
         
         

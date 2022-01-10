@@ -114,7 +114,9 @@ class Parser:
         condition = self.expression()
         self.consume(TokenType.RIGHT_PAREN, 'expect a ")" after condition')
         self.consume(TokenType.THEN, 'expect a "THEN" after condition')
-        then_branch = self.statement()
+        then_branch = []
+        while not self.match_no_consume([TokenType.ELIF, TokenType.ELSE]):
+            then_branch.append(self.statement())
         
         # Elif
         elif_list = []
@@ -123,7 +125,9 @@ class Parser:
             condition = self.expression()
             self.consume(TokenType.RIGHT_PAREN, 'expect a ")" after condition')
             self.consume(TokenType.THEN, 'expect a "THEN" after condition')
-            then_branch = self.statement()    
+            then_branch = []
+            while not self.match_no_consume([TokenType.ELIF, TokenType.ELSE]):
+                then_branch.append(self.statement())   
             elif_list.append(Elif(condition, then_branch))
             
         # Else
@@ -164,7 +168,8 @@ class Parser:
         try:
             return self.tokens[self.current+1]
         except:
-            return
+            # At end of token list, so return EOF token
+            return self.tokens[self.current]
     
     
     def at_end(self):
