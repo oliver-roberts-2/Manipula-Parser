@@ -6,7 +6,7 @@ File containing the interpreter class.
 
 from tokens import Token
 from expression import Visitor as Expression_Visitor
-from expression import Expression, Range, Variable_Expression
+from expression import Range, Variable_Expression
 from statement import Visitor as Statement_Visitor
 
 
@@ -174,7 +174,7 @@ class PythonPrinter(Expression_Visitor, Statement_Visitor):
         name = expression.name
         if isinstance(name, Token):
             return name.lexeme
-        elif isinstance(name, Expression):
+        else:
             return PythonPrinter.evaluate(name)
         
 
@@ -186,8 +186,9 @@ class PythonPrinter(Expression_Visitor, Statement_Visitor):
 
     def visit_assign(expression):
         ''' Overwrites Expression.visit_assign() class method. '''
+        name = PythonPrinter.evaluate(expression.name)
         value = PythonPrinter.evaluate(expression.value)
-        return f'{expression.name} = {value}'
+        return f'{name} = {value}'
         
     
     def visit_logical(expression):

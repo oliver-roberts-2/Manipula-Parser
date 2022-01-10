@@ -115,7 +115,7 @@ class Parser:
         self.consume(TokenType.RIGHT_PAREN, 'expect a ")" after condition')
         self.consume(TokenType.THEN, 'expect a "THEN" after condition')
         then_branch = []
-        while not self.match_no_consume([TokenType.ELIF, TokenType.ELSE]):
+        while not self.match_no_consume([TokenType.ELIF, TokenType.ELSE, TokenType.ENDIF]):
             then_branch.append(self.statement())
         
         # Elif
