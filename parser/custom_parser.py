@@ -39,8 +39,10 @@ class Parser:
         ''' Function to build an identifier if . or [ are present. '''
         names = [self.consume(TokenType.IDENTIFIER, 'expect variable name')]
         bracket_counter = 0
+        end = False
         while self.match_no_consume([TokenType.DOT, TokenType.LEFT_SQUARE,
-                                     TokenType.IDENTIFIER, TokenType.RIGHT_SQUARE]):
+                                     TokenType.IDENTIFIER, TokenType.RIGHT_SQUARE, TokenType.NUMBER]) and end == False:
+            
             if self.check(TokenType.LEFT_SQUARE):
                 bracket_counter += 1
             elif self.check(TokenType.RIGHT_SQUARE):
@@ -48,7 +50,14 @@ class Parser:
                     bracket_counter -= 1
                 else:
                     break
-            names.append(self.advance())            
+            # if names[-1].type == TokenType.IDENTIFIER:
+            if self.check(TokenType.IDENTIFIER):
+                if names[-1].type == TokenType.IDENTIFIER or names[-1].type == TokenType.RIGHT_SQUARE:
+                    end = True
+                else:
+                    names.append(self.advance())
+            else:
+                names.append(self.advance()) 
         return Multi_Identifier_Variable_Expression(names)
     
     
@@ -104,7 +113,13 @@ class Parser:
         self.consume(TokenType.LEFT_PAREN, 'expect a "(" after "while"')
         condition = self.expression()
         self.consume(TokenType.RIGHT_PAREN, 'expect a ")" after condition')
-        body = self.statement()
+        self.consume(TokenType.DO, 'expect "DO" after WHILE condition')
+
+        body = []
+        while not self.check(TokenType.ENDDO):
+            body.append(self.statement())
+        self.consume(TokenType.ENDDO, 'expect an "ENDDO" after WHILE statement')
+
         return While(condition, body)
         
         
@@ -117,26 +132,29 @@ class Parser:
         then_branch = []
         while not self.match_no_consume([TokenType.ELIF, TokenType.ELSE, TokenType.ENDIF]):
             then_branch.append(self.statement())
-        
+            
         # Elif
         elif_list = []
         while self.match([TokenType.ELIF]):
-            self.consume(TokenType.LEFT_PAREN, 'expect a "(" after "if"')
-            condition = self.expression()
+            self.consume(TokenType.LEFT_PAREN, 'expect a "(" after "elif"')
+            elif_condition = self.expression()
             self.consume(TokenType.RIGHT_PAREN, 'expect a ")" after condition')
             self.consume(TokenType.THEN, 'expect a "THEN" after condition')
-            then_branch = []
-            while not self.match_no_consume([TokenType.ELIF, TokenType.ELSE]):
-                then_branch.append(self.statement())   
-            elif_list.append(Elif(condition, then_branch))
+            elif_then_branch = []
+            while not self.match_no_consume([TokenType.ELIF, TokenType.ELSE, TokenType.ENDIF]):
+                elif_then_branch.append(self.statement())   
+            elif_list.append(Elif(elif_condition, elif_then_branch))
             
         # Else
+        
         else_branch = None
         if self.match([TokenType.ELSE]):
-            else_branch = self.statement()
-            
+            else_branch = []
+            while not self.match_no_consume([TokenType.ENDIF]):
+                else_branch.append(self.statement())
         # Consume ENDIF
         self.consume(TokenType.ENDIF, 'expect an "ENDIF" after if statement')
+        
         return If(condition, then_branch, elif_list, else_branch)
         
         
@@ -244,11 +262,13 @@ class Parser:
         if self.match([TokenType.EQUAL]):
             equals = self.previous()
             value = self.assignment()
-            if type(expression) == Variable_Expression: 
+            if type(expression) == Variable_Expression:
+                
                 name = expression.name
                 return Assign(name, value)
             else:
                 self.error(equals, 'invalid assignment target')
+             
         return expression
                 
     
@@ -267,6 +287,7 @@ class Parser:
     
     def _and(self):
         ''' Function to parse OR operands - AND. '''
+
         expression = self._range()
         if self.peek_next().type == TokenType.AND:
             self.consume(TokenType.RIGHT_PAREN, 'expect ")" between condition and "AND"')

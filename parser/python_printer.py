@@ -67,22 +67,24 @@ class PythonPrinter(Expression_Visitor, Statement_Visitor):
         
     def visit_variable_statement(statement):
         ''' Overwrites Statement.visit_variable_statement() class method. '''
+        name = PythonPrinter.evaluate(statement.name)
         if statement.initialiser != None:
             value = PythonPrinter.evaluate(statement.initialiser)
             if isinstance(statement.initialiser, Range):
-                return f'{statement.name.lexeme} in {value}'
+                return f'{name} in {value}'
             else:
-                return f'{statement.name.lexeme} = {value}' 
+                return f'{name} = {value}'
         else:
-            return f'{statement.name.lexeme}' 
+            return f'{name}' 
         
         
     def visit_if(statement):
         ''' Overwrites Statement.visit_if() class method. '''
         condition = PythonPrinter.evaluate(statement.condition)
+        # string = '\n' + '\t'*PythonPrinter.indent
         string = f'if {condition}:'
-        PythonPrinter.indent += 1
         
+        PythonPrinter.indent += 1
         # Then branch
         for stmt in statement.then_branch:
             string += '\n' + '\t'*PythonPrinter.indent
@@ -128,12 +130,12 @@ class PythonPrinter(Expression_Visitor, Statement_Visitor):
     def visit_for(statement):
         ''' Overwrites Statement.visit_for() class method. '''
         initialiser = PythonPrinter.evaluate(statement.initialiser)
-        body = PythonPrinter.execute(statement.body)
         string = f'for {initialiser}:'
         PythonPrinter.indent += 1
-        
+        for stmt in statement.body:
+            body = PythonPrinter.execute(stmt)
         # Body
-        string += '\n' + '\t'*PythonPrinter.indent + f'{body}'
+            string += '\n' + '\t'*PythonPrinter.indent + f'{body}'
         
         PythonPrinter.indent -= 1
         return string
