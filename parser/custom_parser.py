@@ -69,7 +69,7 @@ class Parser:
             initialiser = self.expression()
             return Variable_Statement(name, initialiser)
         elif self.peek_next().type == TokenType.EQUAL:
-            name = self.consume(TokenType.IDENTIFIER, 'expect variable name')
+            name = Variable_Expression(self.consume(TokenType.IDENTIFIER, 'expect variable name'))
             self.consume(TokenType.EQUAL, 'expect ":=" after variable name')
             initialiser = self.expression()
             return Variable_Statement(name, initialiser)
@@ -125,9 +125,7 @@ class Parser:
         
     def if_statement(self):
         ''' Function to handle an if statement. '''
-        self.consume(TokenType.LEFT_PAREN, 'expect a "(" after "if"')
         condition = self.expression()
-        self.consume(TokenType.RIGHT_PAREN, 'expect a ")" after condition')
         self.consume(TokenType.THEN, 'expect a "THEN" after condition')
         then_branch = []
         while not self.match_no_consume([TokenType.ELIF, TokenType.ELSE, TokenType.ENDIF]):
@@ -136,9 +134,7 @@ class Parser:
         # Elif
         elif_list = []
         while self.match([TokenType.ELIF]):
-            self.consume(TokenType.LEFT_PAREN, 'expect a "(" after "elif"')
             elif_condition = self.expression()
-            self.consume(TokenType.RIGHT_PAREN, 'expect a ")" after condition')
             self.consume(TokenType.THEN, 'expect a "THEN" after condition')
             elif_then_branch = []
             while not self.match_no_consume([TokenType.ELIF, TokenType.ELSE, TokenType.ENDIF]):
@@ -263,7 +259,6 @@ class Parser:
             equals = self.previous()
             value = self.assignment()
             if type(expression) == Variable_Expression:
-                
                 name = expression.name
                 return Assign(name, value)
             else:
@@ -275,11 +270,8 @@ class Parser:
     def _or(self):
         ''' Function to parse a series of or expressions. '''
         expression = self._and()
-        if self.peek_next().type == TokenType.OR:
-            self.consume(TokenType.RIGHT_PAREN, 'expect ")" between condition and "OR"')
         while self.match([TokenType.OR]):
             operator = self.previous()
-            self.consume(TokenType.LEFT_PAREN, 'expect "(" between "OR" and condition')
             right = self._and()
             expression = Logical(expression, operator, right)
         return expression
@@ -287,13 +279,9 @@ class Parser:
     
     def _and(self):
         ''' Function to parse OR operands - AND. '''
-
         expression = self._range()
-        if self.peek_next().type == TokenType.AND:
-            self.consume(TokenType.RIGHT_PAREN, 'expect ")" between condition and "AND"')
         while self.match([TokenType.AND]):
             operator = self.previous()
-            self.consume(TokenType.LEFT_PAREN, 'expect "(" between "AND" and condition')
             right = self._range()
             expression = Logical(expression, operator, right)
         return expression
@@ -353,7 +341,7 @@ class Parser:
     
     def unary(self):
         ''' Function for unary operators. '''
-        if self.match([TokenType.BANG, TokenType.MINUS]):
+        if self.match([TokenType.BANG, TokenType.MINUS, TokenType.NOT]):
             operator = self.previous()
             right = self.unary()
             return Unary(operator, right)

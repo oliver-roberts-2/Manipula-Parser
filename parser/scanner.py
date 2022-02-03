@@ -38,6 +38,7 @@ class Scanner():
             'WHILE': TokenType.WHILE,
             'PRINT': TokenType.PRINT,
             'VAR': TokenType.VAR,
+            'NOT': TokenType.NOT,
             'NULL': None
             }
         
