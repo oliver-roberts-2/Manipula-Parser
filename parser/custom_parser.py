@@ -259,7 +259,7 @@ class Parser:
             equals = self.previous()
             value = self.assignment()
             if type(expression) == Variable_Expression:
-                name = expression.name
+                name = Variable_Expression(expression.name)
                 return Assign(name, value)
             else:
                 self.error(equals, 'invalid assignment target')

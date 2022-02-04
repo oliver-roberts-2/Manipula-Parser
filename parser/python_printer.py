@@ -14,6 +14,7 @@ class PythonPrinter(Expression_Visitor, Statement_Visitor):
     
     
     indent = 0
+    identifiers = []
     
     
     def _write(statements):
@@ -21,7 +22,7 @@ class PythonPrinter(Expression_Visitor, Statement_Visitor):
         python_syntax = []
         for statement in statements:
             python_syntax.append(PythonPrinter.execute(statement))
-        return python_syntax
+        return python_syntax, list(set(PythonPrinter.identifiers))
 
             
     def execute(statement):
@@ -175,6 +176,7 @@ class PythonPrinter(Expression_Visitor, Statement_Visitor):
         ''' Overwrites Expression.visit_variable_expression() class method. '''
         name = expression.name
         if isinstance(name, Token):
+            PythonPrinter.identifiers.append(name.lexeme.lower())
             return name.lexeme.lower()
         else:
             return PythonPrinter.evaluate(name)
@@ -183,6 +185,7 @@ class PythonPrinter(Expression_Visitor, Statement_Visitor):
     def visit_multi_identifier_variable_expression(expression):
         '''Overwrites Expression.visit_multi_identifier_variable_expression() class method. '''
         elements = [token.lexeme for token in expression.names]
+        PythonPrinter.identifiers.append(elements[-1].lower())
         return elements[-1].lower()
         
 

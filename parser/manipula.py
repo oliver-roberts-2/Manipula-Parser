@@ -40,10 +40,6 @@ class Manipula:
     
     def write_python(self):
         ''' Function to write the parsed statements into Python syntax. '''
-        self.syntax = PythonPrinter._write(self.statements)
+        self.syntax, self.identifiers = PythonPrinter._write(self.statements)
     
-
-manip = Manipula('sample_text.txt')
-for line in manip.syntax:
-    print(line)
 
